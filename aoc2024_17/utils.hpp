@@ -3,6 +3,20 @@
 #include <fstream>
 #include <vector>
 #include <optional>
+#include <cstdint>
+#include <utility>
+
+
+
+#if defined(_MSC_VER)
+#define Unreachable() __debugbreak(); __assume(0);
+#define SCANF sscanf_s
+#define SCANF_S_ARG(arg) ,arg
+#else
+#define SCANF sscanf
+#define SCANF_S_ARG(arg)
+#define Unreachable() __builtin_unreachable();
+#endif
 
 template<typename T>
 void EasyErase(std::vector<T>& vec, T const& toErase)
@@ -259,7 +273,7 @@ struct TwoDVector
     }
 
     template<typename iterator>
-    void append(iterator begin, typename iterator end)
+    void append(iterator begin, iterator end)
     {
         _vec.insert(_vec.end(), begin, end);
     }
