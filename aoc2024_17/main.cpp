@@ -200,21 +200,31 @@ void BuildValidOutput(Computer & computer, std::unordered_map<int64_t, std::set<
 
 	for (auto& nextBits : candidateNextBits)
 	{
+		// move the new bits into the right position
 		int64_t bitsInPosition = nextBits << (position * 3);
+
+		// Check for changes outside of our safe 3 bit lower area
 		int64_t badChangeMask = ~(7ll << (position * 3));
 		int64_t mightChange = (bitsInPosition & badChangeMask);
 		
-		// we are setting bits and changing our previous result
+		// check we're not changing the bits above our 3 bit lower area
+		// we might use them, but they should match
 		if (~candidateA & mightChange) continue;
 
+		// Propose a new A with our new bottom 3 bits
 		int64_t newA = candidateA | bitsInPosition;
-		int64_t bottom10 = (newA >> (position * 3)) & ((1ll << 10) - 1);
 
+		// Check that it's not bigger than our existing solution
 		if (newA > solution) return;
 
-		// bits of the new candidate are being changed
+		// Get the bottom 10 bits (these are what decide our output)
+		int64_t bottom10 = (newA >> (position * 3)) & ((1ll << 10) - 1);
+
+		// check that our bottom 10 bits are what we expect from our new
+		// candidate (if they're not, our output won't be as expected)
 		if (bottom10 != nextBits) continue;
 
+		// Move on to the next bits
 		BuildValidOutput(computer, valueToAs, newA, position - 1, solution);
 	}
 }
@@ -223,6 +233,9 @@ int64_t BuildValidOutput(Computer& computer)
 {
 	std::unordered_map<int64_t, std::set<int64_t>> candidatesByTargetOutput;
 
+	// Build lookup table of 10 bit inputs to first output
+	// The output for each iteration is decided by the bottom
+	// 10 bits.
 	for (int64_t i = 0; i < (1 << 10); ++i)
 	{
 		computer.Reset();
@@ -232,6 +245,7 @@ int64_t BuildValidOutput(Computer& computer)
 		candidatesByTargetOutput[computer.output.front()].insert(i);
 	}
 
+	// Reversed so that we should find the best solution first
 	int64_t solution = INT64_MAX;
 	BuildValidOutput(computer, candidatesByTargetOutput, 0, computer.code.size() - 1, solution);
 
